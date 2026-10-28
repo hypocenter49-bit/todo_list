@@ -23,8 +23,8 @@
   /* 시작 화면 상단: 큰 글씨 탭 (켜진 탭만 선명하게) */
   .nav{display:flex;gap:2px}
   /* 눌리는 영역: 버튼이 작아도 최소 44×44px (화면에 보이는 크기는 그대로) */
-  .navbtn,.tbtn,.act,.arrow,.textbtn,.detailbtn,.undo,.link{position:relative}
-  .navbtn::before,.tbtn::before,.act::before,.arrow::before,.textbtn::before,.detailbtn::before,.undo::before,.link::before{content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  .navbtn,.act,.arrow,.textbtn,.detailbtn,.undo,.link{position:relative}
+  .navbtn::before,.act::before,.arrow::before,.textbtn::before,.detailbtn::before,.undo::before,.link::before{content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
   .bar.wrap{flex-wrap:wrap;padding-bottom:6px}
   .bar.wrap h1{flex:1 1 100%}
   .bar.wrap h1.pt{flex:1 1 auto}
@@ -36,8 +36,25 @@
   .daynav .arrow{font-size:28px;line-height:1;padding:2px 10px}
   .unlockbtn{display:block;width:100%;margin-top:10px;padding:12px;text-align:center}   /* id가 아니라 class: 옆 날짜 미리보기(복사본)에서도 같은 모양이 되게 */
   .stat{flex:none}
-  .bar.wrap .tools{flex:1 1 100%;justify-content:flex-end}
   .soon{margin-top:40px}
+  /* 선택 모드: 끌어서 이동 (☰ 손잡이는 선택 모드에서만 보인다) */
+  .act.handle{touch-action:none;cursor:grab;background:none;border:0;color:var(--sub)}
+  .act.lock{opacity:.35;background:none;font-size:16px}
+  #all.dragging li,#calList.dragging li{transition:transform .2s ease}
+  #all li.lift,#calList li.lift{transition:none;z-index:3;position:relative;background:#2a2a2a;box-shadow:0 10px 28px rgba(0,0,0,.9),0 0 0 2px var(--accent)}
+  #all li.settle,#calList li.settle{transition:transform .15s ease;z-index:3;position:relative}
+  /* 선택 모드 */
+  #all li,#calList li{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+  li.sel{background:#14243a}
+  .selmark{flex:none;width:28px;height:28px;border-radius:50%;background:#2b2b2b;color:#000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px}
+  .selmark.on{background:var(--accent)}
+  .selbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom));z-index:11;width:min(calc(100vw - 24px),520px);display:flex;background:#262626;border-radius:18px;padding:6px;box-shadow:0 6px 20px rgba(0,0,0,.7)}
+  .sbtn{flex:1;min-width:0;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:none;color:#fff;font-size:18px;line-height:1.1;padding:4px 0}
+  .sbtn small{font-size:10px;white-space:nowrap}
+  .sbtn:disabled{opacity:.3}
+  .sbtn.danger{color:var(--late)}
+  .selchip{position:absolute;left:50%;top:-38px;transform:translateX(-50%);border:0;background:#262626;color:#fff;padding:6px 14px;border-radius:16px;font-size:13px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+  body.sel-on #toast{bottom:calc(196px + env(safe-area-inset-bottom))}
   main{min-height:100vh;touch-action:pan-y}   /* 빈 공간에서도 밀 수 있게 화면 전체 높이, 세로 스크롤은 그대로 두고 가로로 미는 동작만 직접 처리 */
   #dayBox,#calBox{position:relative}
   #dayBox,#dayPane{display:flow-root}      /* 첫 칸의 위쪽 바깥 여백이 밖으로 빠져나가지 않게 → 옆 날짜 미리보기와 같은 높이에서 시작 */
@@ -62,7 +79,6 @@
   .navbtn{border:0;background:none;color:var(--text);font-size:14px;padding:8px 4px;white-space:nowrap}
   .sech{font-size:14px;color:var(--sub);font-weight:600;margin:0}
   .sechrow{display:flex;justify-content:space-between;align-items:center;margin:26px 0 10px}
-  .dangerbtn{width:100%;margin-top:10px;padding:14px;border:0;border-radius:12px;background:var(--btn);color:var(--late);font-size:16px;font-weight:700}
   .undo{flex:none;border:0;background:none;color:var(--accent);font-size:14px;font-weight:700;padding:10px 4px;white-space:nowrap}
   .next{font-size:14px;color:var(--sub);margin-top:6px;word-break:break-all}
   .pmsg{font-size:14px;font-weight:700;margin-top:10px}
@@ -82,16 +98,7 @@
   .subrow button{border:0;background:none;color:var(--late);font-size:20px;padding:0 8px}
   .sublbl{font-size:13px;color:var(--sub);margin:4px 0 6px}
   li.donerow .title{color:var(--sub);text-decoration:line-through}
-  .tbtn{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:40px;padding:5px 3px;border:0;color:var(--text);border-radius:10px;background:none;font-size:18px;line-height:1.1}
-  .tbtn .ico{display:block;width:20px;height:20px}
-  .tbtn{position:relative;padding-bottom:9px;color:#fff}
-  .tbtn small{font-size:10px;color:inherit}
   /* 켜짐 표시: 배경 대신 '아이콘 밝기 + 굵은 글자 + 아래 점' (켜지지 않은 버튼은 모두 흐리게, 누르는 동안만 밝게) */
-  .tbtn:not(.on){opacity:.55}
-  .tbtn:not(.on):active{opacity:1}
-  .tbtn.on small{font-weight:700}
-  .tbtn.on::after{content:'';position:absolute;bottom:1px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#fff}
-  .tools{display:flex;gap:2px}
   .bar .textbtn{padding:8px 10px}
   .textbtn{border:0;background:var(--btn);padding:8px 12px;border-radius:10px;font-size:14px}
   .back{border:0;background:none;font-size:22px;padding:4px 8px}
@@ -146,16 +153,8 @@
 
   /* 전체 일정 */
   #all li{cursor:pointer}
-  body.mode-move #all li, body.mode-del #all li{cursor:default}
   .act{flex:none;min-width:44px;height:40px;border:0;border-radius:10px;background:none;color:var(--sub);font-size:20px;display:flex;align-items:center;justify-content:center}
   .act.star.on{color:var(--star)}
-  .act.trash{color:var(--late)}
-  .act.handle{touch-action:none;cursor:grab;background:none;border:0;color:var(--sub)}
-  .act.lock{opacity:.35;background:none;font-size:16px}
-  body.mode-move #all{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-  #all.dragging li{transition:transform .2s ease}
-  #all li.lift{transition:none;z-index:3;position:relative;background:#2a2a2a;box-shadow:0 10px 28px rgba(0,0,0,.9),0 0 0 2px var(--accent)}
-  #all li.settle{transition:transform .15s ease;z-index:3;position:relative}
   .addbig{width:100%;margin-top:14px;padding:16px;border:0;border-radius:12px;background:var(--btn);color:var(--accent);font-size:18px;font-weight:700}
 
   #toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:14px;background:#262626;color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.35);max-width:92vw;font-size:14px}
@@ -258,10 +257,6 @@
         <div class="daytitle" id="dayTitle"></div>
         <button class="navbtn arrow" id="dayNext" aria-label="다음날">›</button>
         </div>
-      <div class="tools">
-        <button class="tbtn" data-mode="del" aria-pressed="false" title="삭제">🗑<small>삭제</small></button>
-        <button class="tbtn" data-mode="move" aria-pressed="false" title="순서 이동">↕<small>이동</small></button>
-      </div>
     </div>
     <div id="dayBox"><div id="dayPane">
     <button class="textbtn unlockbtn" id="dayUnlock" hidden>🔒 지난 날짜예요. 수정하려면 잠금 해제</button>
@@ -270,8 +265,6 @@
       <div class="pmsg" id="dsMsg2"></div>
       <div class="prog lg"><div class="track"><i id="dsBar2"></i></div><span id="dsPct2"></span></div>
     </div>
-    <div class="hint" id="hint" hidden></div>
-    <button class="dangerbtn" id="delAll" hidden></button>
     <div class="date" id="allCount"></div>
     <ul id="all"></ul>
     <button class="addbig" id="addBig">＋ 일정 추가</button>
@@ -297,6 +290,16 @@
 </main>
 
 <button class="fab" id="fab" aria-label="일정 추가" hidden>＋</button>
+
+<div class="selbar" id="selbar" hidden role="toolbar" aria-label="선택한 일정">
+  <button class="selchip" id="selCount"></button>
+  <button class="sbtn" id="selClose" aria-label="선택 끝내기">✕<small>취소</small></button>
+  <button class="sbtn" data-sel="fav" aria-label="즐겨찾기">★<small>즐겨찾기</small></button>
+  <button class="sbtn" data-sel="done" aria-label="하위 작업까지 모두 완료">✓<small>모두 완료</small></button>
+  <button class="sbtn" data-sel="up" aria-label="선택한 일정을 한 칸 위로">▲<small>위로</small></button>
+  <button class="sbtn" data-sel="down" aria-label="선택한 일정을 한 칸 아래로">▼<small>아래로</small></button>
+  <button class="sbtn danger" data-sel="del" aria-label="삭제">🗑<small>삭제</small></button>
+</div>
 
 <nav class="tabbar" aria-label="메뉴"><div class="in">
   <button data-go=""><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h12V9.5M10 20v-5.5h4V20"/></svg><span>홈</span></button>
@@ -449,7 +452,8 @@ let toastTimer;
 function toast(msg, undo){
   const el = $('toast'); clearTimeout(toastTimer);
   $('toastMsg').textContent = msg;
-  $('toastUndo').onclick = () => { undo(); el.hidden = true; clearTimeout(toastTimer); };
+  $('toastUndo').hidden = !undo;
+  $('toastUndo').onclick = () => { if (undo) undo(); el.hidden = true; clearTimeout(toastTimer); };
   el.hidden = false;
   toastTimer = setTimeout(() => { el.hidden = true; }, 6000);
 }
@@ -632,11 +636,89 @@ function listRow(item, now, left){
   return li;
 }
 /* ---------- 전체 일정 ---------- */
-let mode = '';       // '' | fav | del | move
-const HINTS = {
-  del: '🗑 를 눌러 일정을 삭제하세요. 삭제 직후 "되돌리기"로 복구할 수 있어요. 아래 버튼으로 전체 삭제도 할 수 있어요.',
-  move: '시간이 없는 일정의 ☰ 를 잡고 끌어서 순서를 바꾸세요. 손을 놓으면 확정돼요. 시간이 있는 일정은 고정이에요.'
-};
+let mode = '';       // '' | select (여러 개 선택)
+const sel = new Set();                 // 선택한 일정의 id
+let shownList = [], lpUntil = 0, selCtx = '';   // 지금 화면에 보이는 일정(순서대로) / 꾹 누른 직후 잠깐 동안 클릭 무시 / 선택을 시작한 화면(날짜)
+const curCtx = () => route() === 'cal' ? 'cal:' + calSel : 'all:' + viewDate;
+const rerender = () => { if (route() === 'cal') renderCal(); else renderAll(); };
+const selTasks = () => shownList.filter(t => sel.has(t.id));
+function selMark(id){ const m = document.createElement('span'); m.className = 'selmark' + (sel.has(id) ? ' on' : ''); m.textContent = sel.has(id) ? '✓' : ''; return m; }
+let selPushed = false;                  // 선택 모드를 시작할 때 기록(history) 한 칸을 더 쌓아 두어, 뒤로가기가 '선택 끝내기'가 되게 한다
+function enterSelect(id){
+  mode = 'select'; sel.clear(); sel.add(id); selCtx = curCtx(); lpUntil = Date.now() + 700;
+  if (!selPushed){ history.pushState({sel: 1}, '', location.href); selPushed = true; }
+  rerender();
+}
+function leaveSelectHistory(){ if (selPushed){ selPushed = false; history.back(); } }       // 선택 모드가 다른 이유로 끝났을 때 쌓아 둔 한 칸을 정리
+window.addEventListener('popstate', () => {                                                 // 뒤로가기: 선택 중이면 선택만 끝낸다
+  if (!selPushed) return;
+  selPushed = false;
+  if (mode === 'select'){ mode = ''; sel.clear(); render(); }
+});
+function toggleSel(id){ if (sel.has(id)) sel.delete(id); else sel.add(id); rerender(); }
+function exitSelect(){ mode = ''; sel.clear(); render(); }
+function selAll(){ const all = shownList.length && shownList.every(t => sel.has(t.id)); sel.clear(); if (!all) shownList.forEach(t => sel.add(t.id)); rerender(); }
+// 꾹 누르기(약 0.45초): 손가락이 움직이면(스크롤·밀기) 취소
+function attachLongPress(el, onLong){
+  let timer = null, sx = 0, sy = 0;
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  el.addEventListener('pointerdown', e => {
+    if (e.button) return; sx = e.clientX; sy = e.clientY;
+    timer = setTimeout(() => { timer = null; navigator.vibrate?.(15); onLong(); }, 450);
+  });
+  el.addEventListener('pointermove', e => { if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 8) cancel(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => el.addEventListener(t, cancel));
+  el.addEventListener('contextmenu', e => e.preventDefault());           // 길게 눌렀을 때 뜨는 시스템 메뉴 막기
+}
+document.addEventListener('click', e => { if (Date.now() < lpUntil){ e.stopPropagation(); e.preventDefault(); } }, true);   // 꾹 누르고 뗄 때 생기는 클릭 무시
+
+// 선택 바의 기능
+function actFav(){
+  const L = selTasks(); if (!L.length) return;
+  const make = !L.every(t => t.fav), prev = new Map(L.map(t => [t, t.fav]));
+  L.forEach(t => { t.fav = make; }); save(); rerender();
+  toast(make ? `★ ${L.length}개를 즐겨찾기에 넣었어요` : `즐겨찾기를 ${L.length}개 해제했어요`, () => { prev.forEach((v, t) => { t.fav = v; }); save(); rerender(); });
+}
+function actDone(){                                         // 모두 완료: 하위 작업까지 전부 끝내고 일정도 완료 (오늘 해야 하는 일정만)
+  const now = new Date(), today = ymd(now), dueMap = new Map(computeDue(now).map(i => [i.t, i]));
+  const items = selTasks().filter(t => dueMap.has(t)).map(t => dueMap.get(t));
+  if (!items.length){ toast('오늘 완료할 수 있는 일정이 없어요'); return; }
+  bulkWithUndo(`${items.length}개를 완료했어요 (하위 작업 포함)`, () => {
+    items.forEach(i => { (i.t.subs || []).forEach(sb => setSub(i.t, sb, true, today)); markDone(i); });
+    mode = ''; sel.clear();
+  });
+}
+function actDel(){
+  const L = selTasks(); if (!L.length) return;
+  if (L.some(t => t.repeat !== 'none') && !confirm(`반복 일정이 포함돼 있어요.\n삭제하면 앞으로의 일정도 모두 사라져요. ${L.length}개를 삭제할까요?`)) return;
+  const gone = new Set(L);
+  bulkWithUndo(`${L.length}개를 삭제했어요`, () => { tasks = tasks.filter(t => !gone.has(t)); mode = ''; sel.clear(); });
+}
+function actMove(dir){                                      // 위/아래로 한 칸: 시간이 없는 선택 일정만 움직이고, 시간이 있는 일정은 제자리
+  const L = shownList.slice(), isSel = t => sel.has(t.id);
+  const order = L.map((_, i) => i); if (dir > 0) order.reverse();
+  let moved = false;
+  for (const i of order){
+    const t = L[i], j = i + dir;
+    if (!isSel(t) || t.time || j < 0 || j >= L.length || isSel(L[j])) continue;
+    L[i] = L[j]; L[j] = t; moved = true;
+  }
+  if (!moved) return;
+  const shown = new Set(shownList.map(t => t.id)), slots = [];
+  tasks.forEach((t, i) => { if (shown.has(t.id)) slots.push(i); });
+  L.forEach((t, k) => { tasks[slots[k]] = t; });
+  save(); rerender();
+}
+function updateSelbar(){
+  const L = selTasks(), n = L.length, dueSet = new Set(computeDue(new Date()).map(i => i.t));
+  const all = shownList.length > 0 && n === shownList.length;
+  $('selCount').textContent = `${n}개 선택 · ${all ? '전체 해제' : '전체 선택'}`;
+  const dis = {fav: !n, done: !L.some(t => dueSet.has(t)), up: !L.some(t => !t.time), down: !L.some(t => !t.time), del: !n};
+  document.querySelectorAll('#selbar [data-sel]').forEach(b => { b.disabled = !!dis[b.dataset.sel]; });
+}
+document.querySelectorAll('#selbar [data-sel]').forEach(b => b.onclick = () => ({fav: actFav, done: actDone, del: actDel, up: () => actMove(-1), down: () => actMove(1)})[b.dataset.sel]());
+$('selClose').onclick = exitSelect;
+$('selCount').onclick = selAll;
 let viewDate = ymd(new Date()), dayUnlocked = '';     // 일일 목표 탭에서 보고 있는 날짜 / 잠금을 푼 지난 날짜
 function shiftDay(n, anim = true){
   const d = at(viewDate); d.setDate(d.getDate() + n);
@@ -645,6 +727,8 @@ function shiftDay(n, anim = true){
 }
 function renderAll(){
   setTimeout(updateFab);
+  if (mode === 'select' && selCtx !== curCtx()) mode = '';
+  if (mode !== 'select'){ sel.clear(); leaveSelectHistory(); }
   const now = new Date(), today = ymd(now), isToday = viewDate === today, past = viewDate < today;
   const editable = !past || dayUnlocked === viewDate, ul = $('all');
   if (!editable) mode = '';
@@ -654,7 +738,7 @@ function renderAll(){
   $('dayTitle').textContent = (dd.getFullYear() !== now.getFullYear() ? dd.getFullYear() + '년 ' : '') + `${dd.getMonth() + 1}월 ${dd.getDate()}일 (${DAYS[dd.getDay()]})`;
   $('dayTitle').classList.toggle('today', isToday);
   $('dayToday').disabled = isToday;                       // 오늘 버튼은 항상 같은 자리, 오늘이면 눌리지 않게
-  document.querySelector('#vAll .tools').style.visibility = editable ? '' : 'hidden'; $('addBig').hidden = !editable;   // 도구 줄은 자리를 유지한 채 숨긴다: 날짜를 넘길 때 상단 바 높이가 바뀌어 내용이 튀지 않게
+  $('addBig').hidden = !editable;   // 도구 줄은 자리를 유지한 채 숨긴다: 날짜를 넘길 때 상단 바 높이가 바뀌어 내용이 튀지 않게
   $('dayUnlock').hidden = !(past && !editable);
 
   // 일정 목록: 오늘은 '오늘 해야 하는 일'(밀린 일정 포함), 다른 날은 그날 해당하는 일정
@@ -680,11 +764,9 @@ function renderAll(){
       $('dsSub2').textContent = `기록 · 일정 ${e.n}개 중 ${e.d}개 완료`;
     }
   }
-  $('delAll').hidden = !(isToday && mode === 'del' && list.length); $('delAll').textContent = `🗑 오늘 일정 ${list.length}개 전체 삭제`;
   document.body.className = mode ? 'mode-' + mode : '';
-  document.querySelectorAll('[data-mode]').forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-  $('hint').hidden = !mode; $('hint').textContent = HINTS[mode] || '';
-  $('allCount').textContent = !list.length ? '' : isToday ? `오늘 남은 일정 ${list.length}개 · 일정을 누르면 수정, ☆를 누르면 중요 표시`
+  shownList = list;
+  $('allCount').textContent = mode === 'select' ? '일정을 눌러 선택하고, ☰를 끌어서 순서를 바꿔요' : !list.length ? '' : isToday ? `오늘 남은 일정 ${list.length}개 · 일정을 누르면 수정, ☆를 누르면 중요 표시`
     : editable ? `일정 ${list.length}개 · 일정을 누르면 수정, ☆를 누르면 중요 표시` : `일정 ${list.length}개 · 지난 날짜는 기록만 볼 수 있어요`;
   ul.replaceChildren();
   if (!list.length){
@@ -705,15 +787,13 @@ function renderAll(){
       li.prepend(st); if (doneOf.get(t)) li.classList.add('donerow');
     }
     let act = null;
-    if (mode === 'del'){
-      act = document.createElement('button'); act.className = 'act trash'; act.textContent = '🗑'; act.title = '삭제';
-      act.onclick = e => { e.stopPropagation(); deleteTask(t); };
-    } else if (mode === 'move'){
-      act = document.createElement('div');
-      if (t.time){ act.className = 'act lock'; act.textContent = '🕒'; act.title = '시간이 있는 일정은 이동할 수 없어요'; }
-      else { act.className = 'act handle'; act.textContent = '☰'; act.title = '끌어서 이동'; act.oncontextmenu = e => e.preventDefault(); act.onpointerdown = e => startDrag(e, li, ul); }
+    if (mode === 'select'){                              // 선택 모드: 누르면 선택/해제
+      li.prepend(selMark(t.id)); li.classList.toggle('sel', sel.has(t.id));
+      li.onclick = () => { if (Date.now() < lpUntil) return; toggleSel(t.id); };
+      act = dragHandle(t, li, ul);
     } else if (editable){
       li.onclick = () => openEditor(t);
+      attachLongPress(li, () => enterSelect(t.id));         // 꾹 누르면 선택 모드
       act = document.createElement('button'); act.className = 'act star' + (t.fav ? ' on' : '');
       act.textContent = t.fav ? '★' : '☆'; act.title = '중요 표시';
       act.onclick = e => { e.stopPropagation(); t.fav = !t.fav; save(); renderAll(); };
@@ -744,12 +824,6 @@ function bulkWithUndo(msg, change){
   change(); save(); render();
   toast(msg, () => { tasks = JSON.parse(snap); save(); render(); });
 }
-$('delAll').onclick = () => {
-  const gone = new Set(computeDue(new Date()).map(i => i.t)), n = gone.size; if (!n) return;
-  if (!confirm(`오늘 일정 ${n}개를 모두 삭제할까요?
-반복 일정은 앞으로의 일정도 함께 사라져요.`)) return;
-  bulkWithUndo(`오늘 일정 ${n}개를 삭제했어요`, () => { tasks = tasks.filter(t => !gone.has(t)); });
-};
 $('undoAll').onclick = () => {
   const items = computeDoneToday(new Date()); if (!items.length) return;
   bulkWithUndo(`완료한 일정 ${items.length}개를 되돌렸어요`, () => items.forEach(i => {
@@ -759,76 +833,7 @@ $('undoAll').onclick = () => {
     else { t.doneDates = (t.doneDates || []).filter(d => d !== i.day); if (t.doneTimes) delete t.doneTimes[i.day]; }
   }));
 };
-function setMode(m){ mode = (mode === m ? '' : m); renderAll(); }
 
-// ☰를 잡고 끌기: 잡은 항목이 손가락을 따라 움직이고, 나머지 칸은 자리를 벌려준다. 손을 놓으면 이동 확정.
-function startDrag(e, li, ul){
-  const h = e.currentTarget;
-  const startY = e.clientY;
-  let dragging = false, lastY = startY, raf = 0;
-  let items, centers, idx, H, newIdx, startScroll;
-
-  const begin = () => {
-    dragging = true;
-    items = [...ul.children];
-    idx = items.indexOf(li); newIdx = idx;
-    centers = items.map(el => { const r = el.getBoundingClientRect(); return r.top + scrollY + r.height/2; });
-    H = li.getBoundingClientRect().height + 8;      // 항목 높이 + 간격
-    startScroll = scrollY;
-    ul.classList.add('dragging'); li.classList.add('lift');
-    navigator.vibrate?.(15);
-    tick();
-  };
-  const layout = () => {
-    const dy = (lastY - startY) + (scrollY - startScroll);
-    li.style.transform = `translateY(${dy}px) scale(1.03)`;
-    const c = centers[idx] + dy;
-    newIdx = items.reduce((n, el, j) => n + (j !== idx && centers[j] < c ? 1 : 0), 0);
-    items.forEach((el, j) => {
-      if (j === idx) return;
-      const shift = (j > idx && j <= newIdx) ? -H : (j < idx && j >= newIdx) ? H : 0;
-      el.style.transform = shift ? `translateY(${shift}px)` : '';
-    });
-  };
-  // 화면 위·아래 가장자리에서는 자동 스크롤
-  const tick = () => {
-    if (!dragging) return;
-    if (lastY < 90) scrollBy(0, -10); else if (lastY > innerHeight - 90) scrollBy(0, 10);
-    layout(); raf = requestAnimationFrame(tick);
-  };
-  const move = ev => {
-    lastY = ev.clientY;
-    if (dragging) layout();
-  };
-  const cleanup = () => {
-    cancelAnimationFrame(raf);
-    h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', abort);
-  };
-  const abort = () => { cleanup(); if (dragging) finish(idx, true); };
-  const up = () => { cleanup(); if (dragging) finish(newIdx, false); };
-
-  const finish = (target, aborted) => {
-    dragging = false;
-    // 놓은 자리로 부드럽게 안착한 뒤 순서를 확정한다
-    li.classList.remove('lift'); li.classList.add('settle');
-    li.style.transform = `translateY(${centers[target] - centers[idx]}px)`;
-    setTimeout(() => {
-      if (!aborted && target !== idx){
-        const byId = new Map(tasks.map(t => [t.id, t]));
-        const ids = items.map(el => el.dataset.id); ids.splice(idx, 1); ids.splice(target, 0, li.dataset.id);
-        const shown = new Set(items.map(el => el.dataset.id)), slots = [];
-        tasks.forEach((t, i) => { if (shown.has(t.id)) slots.push(i); });
-        ids.forEach((id, k) => { tasks[slots[k]] = byId.get(id); });
-        save();
-      }
-      renderAll();
-    }, 160);
-  };
-
-  try { h.setPointerCapture(e.pointerId); } catch(err) {}
-  h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', abort);
-  begin();   // ☰는 이동 전용 버튼이라 누르는 즉시 끌기 시작
-}
 
 /* ---------- 추가 / 수정 ---------- */
 let editing = null;
@@ -898,7 +903,7 @@ function render(){
   updateFab();
 }
 function goTab(r){
-  mode = '';
+  mode = ''; selPushed = false;
   if (r === 'all'){ viewDate = ymd(new Date()); dayUnlocked = ''; }       // 일일 목표 탭은 누를 때마다 오늘부터
   if (r === 'cal') resetCal();                           // 월간 목표는 열 때마다 이번 달로
   if (r === '') { history.replaceState(null, '', location.pathname); render(); }
@@ -907,8 +912,7 @@ function goTab(r){
 }
 document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => goTab(b.dataset.go));
 document.querySelectorAll('.backbtn').forEach(b => b.onclick = () => goTab(''));
-window.addEventListener('hashchange', () => { mode = ''; render(); });
-document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+window.addEventListener('hashchange', () => { mode = ''; selPushed = false; render(); });
 $('addBig').onclick = () => { openEditor(null); if (viewDate !== ymd(new Date())) $('eDate').value = viewDate; };   // 다른 날을 보고 있으면 그 날짜로 추가
 // 떠 있는 ＋ 버튼: 홈은 오늘, 일일 목표는 보고 있는 날, 월간 목표는 선택한 날짜로 추가
 $('fab').onclick = () => {
@@ -916,16 +920,90 @@ $('fab').onclick = () => {
   if (r === 'all') $('eDate').value = viewDate; else if (r === 'cal') $('eDate').value = calSel;
 };
 function updateFab(){
-  const r = route(), today = ymd(new Date());
+  const r = route(), today = ymd(new Date()), selOn = mode === 'select' && (r === 'all' || r === 'cal');
   let show = r === '';
   if (r === 'all') show = !mode && (viewDate >= today || dayUnlocked === viewDate);
-  if (r === 'cal') show = calSel >= today || calUnlocked === calSel;       // 지난 날짜는 잠금을 풀어야 추가
+  if (r === 'cal') show = !mode && (calSel >= today || calUnlocked === calSel);       // 지난 날짜는 잠금을 풀어야 추가
   $('fab').hidden = !show; document.body.classList.toggle('fab-on', show);
+  $('selbar').hidden = !selOn; document.body.classList.toggle('sel-on', selOn);          // 선택 모드에서는 ＋ 버튼 대신 선택 바
+  if (selOn) updateSelbar();
 }
 $('dayPrev').onclick = () => shiftDay(-1);
 $('dayNext').onclick = () => shiftDay(1);
 $('dayToday').onclick = () => { viewDate = ymd(new Date()); dayUnlocked = ''; mode = ''; renderAll(); };
 $('dayUnlock').onclick = () => { dayUnlocked = viewDate; renderAll(); };
+
+// ☰를 잡고 끌기: 잡은 항목이 손가락을 따라 움직이고, 나머지 칸은 자리를 벌려준다. 손을 놓으면 이동 확정.
+// 보이는 일정들끼리만 자리를 바꾸고, 화면에 없는 일정의 순서는 그대로 둔다.
+function startDrag(e, li, ul){
+  e.preventDefault();
+  const h = e.currentTarget, startY = e.clientY;
+  try { h.setPointerCapture(e.pointerId); } catch(err) {}
+  const items = [...ul.children], idx = items.indexOf(li);
+  const centers = items.map(el => { const r = el.getBoundingClientRect(); return r.top + scrollY + r.height / 2; });
+  const H = li.getBoundingClientRect().height + 8, startScroll = scrollY;
+  let newIdx = idx, lastY = startY, raf = 0, dragging = true;
+  ul.classList.add('dragging'); li.classList.add('lift'); navigator.vibrate?.(15);
+  const layout = () => {
+    const dy = (lastY - startY) + (scrollY - startScroll);
+    li.style.transform = `translateY(${dy}px) scale(1.03)`;
+    const c = centers[idx] + dy;
+    newIdx = items.reduce((n, el, j) => n + (j !== idx && centers[j] < c ? 1 : 0), 0);
+    items.forEach((el, j) => {
+      if (j === idx) return;
+      const shift = (j > idx && j <= newIdx) ? -H : (j < idx && j >= newIdx) ? H : 0;
+      el.style.transform = shift ? `translateY(${shift}px)` : '';
+    });
+  };
+  const tick = () => {                                       // 화면 위·아래 가장자리에서는 자동 스크롤
+    if (!dragging) return;
+    if (lastY < 90) scrollBy(0, -10); else if (lastY > innerHeight - 160) scrollBy(0, 10);
+    layout(); raf = requestAnimationFrame(tick);
+  };
+  const move = ev => { lastY = ev.clientY; if (dragging) layout(); };
+  const cleanup = () => {
+    cancelAnimationFrame(raf);
+    h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', abort);
+  };
+  const finish = (target, aborted) => {
+    dragging = false;
+    li.classList.remove('lift'); li.classList.add('settle');
+    li.style.transform = `translateY(${centers[target] - centers[idx]}px)`;
+    setTimeout(() => {
+      if (!aborted && target !== idx){
+        const byId = new Map(tasks.map(t => [t.id, t]));
+        const dragId = li.dataset.id;
+        let ids = items.map(el => el.dataset.id); ids.splice(idx, 1); ids.splice(target, 0, dragId);
+        if (sel.has(dragId)){                                      // 선택된 박스를 끌면, 선택된 다른 일정(시간 없는 것)도 그 뒤에 붙어서 같이 간다
+          const others = ids.filter(id => id !== dragId && sel.has(id) && !byId.get(id).time);
+          ids = ids.filter(id => !others.includes(id));
+          ids.splice(ids.indexOf(dragId) + 1, 0, ...others);
+        }
+        const shown = new Set(ids), slots = [];
+        tasks.forEach((t, i) => { if (shown.has(t.id)) slots.push(i); });
+        ids.forEach((id, k) => { tasks[slots[k]] = byId.get(id); });
+        save();
+      }
+      rerender();
+    }, 160);
+  };
+  const abort = () => { cleanup(); if (dragging) finish(idx, true); };
+  const up = () => { cleanup(); if (dragging) finish(newIdx, false); };
+  h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', abort);
+  tick();
+}
+// 선택 모드에서 박스 오른쪽에 붙는 손잡이: 시간이 없으면 끌 수 있고(☰), 시간이 있으면 고정(🕒)
+function dragHandle(t, li, ul){
+  const a = document.createElement('div');
+  if (t.time){ a.className = 'act lock'; a.textContent = '🕒'; a.title = '시간이 있는 일정은 끌 수 없어요'; }
+  else {
+    a.className = 'act handle'; a.textContent = '☰'; a.title = '끌어서 이동';
+    a.oncontextmenu = ev => ev.preventDefault();
+    a.onpointerdown = ev => startDrag(ev, li, ul);
+    a.onclick = ev => ev.stopPropagation();
+  }
+  return a;
+}
 
 /* ---------- 달력 (월간) ---------- */
 let calY = new Date().getFullYear(), calM = new Date().getMonth(), calSel = ymd(new Date()), calUnlocked = '';
@@ -950,6 +1028,8 @@ function itemsOn(D){
 }
 function renderCal(){
   setTimeout(updateFab);
+  if (mode === 'select' && selCtx !== curCtx()) mode = '';
+  if (mode !== 'select'){ sel.clear(); leaveSelectHistory(); }
   snapToday();
   const now = new Date(), today = ymd(now), mk = monthKey(calY, calM);
   $('calTitle').textContent = `${calY}년 ${calM + 1}월`;
@@ -991,14 +1071,22 @@ function renderCal(){
   if (!items.length){
     const em = document.createElement('div'); em.className = 'empty'; em.textContent = '이 날 일정이 없어요'; list.append(em);
   }
+  shownList = items.map(i => i.t);
   for (const it of items){
-    const li = document.createElement('li');
+    const li = document.createElement('li'); li.dataset.id = it.t.id;
     if (it.done) li.classList.add('donerow');
     li.innerHTML = '<span class="stat"></span><div class="info"><div class="title"></div><div class="meta"></div></div>';
     const st = li.querySelector('.stat'); st.textContent = it.done ? '✓' : '○'; st.classList.toggle('on', it.done);
     li.querySelector('.title').textContent = (it.t.fav ? '★ ' : '') + it.t.title;
     li.querySelector('.meta').textContent = (it.t.time || '시간 없음') + (it.t.repeat !== 'none' ? ' · ' + REPEAT_LABEL[it.t.repeat] : '');
-    if (editable){ li.style.cursor = 'pointer'; li.onclick = () => openEditor(it.t); }
+    if (mode === 'select'){
+      li.querySelector('.stat').remove(); li.prepend(selMark(it.t.id)); li.classList.toggle('sel', sel.has(it.t.id));
+      li.onclick = () => { if (Date.now() < lpUntil) return; toggleSel(it.t.id); };
+      li.append(dragHandle(it.t, li, list));
+    } else if (editable){
+      li.style.cursor = 'pointer'; li.onclick = () => openEditor(it.t);
+      attachLongPress(li, () => enterSelect(it.t.id));
+    }
     list.append(li);
   }
   $('calUnlock').hidden = !past || editable;
@@ -1112,7 +1200,7 @@ function blinkBelow(){                                    // 달력 아래 영�
 }
 const noSwipe = e => !!e.target.closest('.bar, .act.handle, input, textarea, select, dialog');
 makeCarousel(document.querySelector('main'), $('dayBox'), e => route() !== 'all' || mode || $('dlg').open || noSwipe(e), dayPreview, d => shiftDay(d, false));
-makeCarousel(document.querySelector('main'), $('calBox'), e => route() !== 'cal' || $('dlg').open || noSwipe(e), calPreview, d => shiftMonth(d), blinkBelow);
+makeCarousel(document.querySelector('main'), $('calBox'), e => route() !== 'cal' || mode || $('dlg').open || noSwipe(e), calPreview, d => shiftMonth(d), blinkBelow);
 
 /* ---------- 알림 ---------- */
 const notified = new Set();
