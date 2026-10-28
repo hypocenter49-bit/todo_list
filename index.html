@@ -38,6 +38,8 @@
   .stat{flex:none}
   .bar.wrap .tools{flex:1 1 100%;justify-content:flex-end}
   .soon{margin-top:40px}
+  #dayPane,#calPane{touch-action:pan-y;will-change:transform}   /* 세로 스크롤은 그대로, 가로로 미는 동작은 직접 처리 */
+  #vAll,#vCal{overflow-x:clip}
   @keyframes sl{from{opacity:.4;transform:translateX(28px)}}
   @keyframes sr{from{opacity:.4;transform:translateX(-28px)}}
   #all.sl{animation:sl .2s ease-out}
@@ -225,6 +227,7 @@
       <button class="navbtn" id="calNext" title="다음 달">›</button>
       <button class="textbtn" id="calToday">오늘</button>
     </div>
+    <div id="calPane">
     <div class="daysum" id="monSum">
       <div class="dsHead"><b id="monName"></b><span id="monSub"></span></div>
       <div class="prog lg"><div class="track"><i id="monBar"></i></div><span id="monPct"></span></div>
@@ -238,6 +241,7 @@
     <ul id="calList"></ul>
     <button class="textbtn" id="calUnlock" hidden></button>
     <button class="addbig" id="calAdd" hidden></button>
+    </div>
   </section>
 
   <!-- ② 전체 일정 -->
@@ -255,6 +259,7 @@
         <button class="tbtn" data-mode="move" aria-pressed="false" title="순서 이동">↕<small>이동</small></button>
       </div>
     </div>
+    <div id="dayPane">
     <button class="textbtn" id="dayUnlock" hidden>🔒 지난 날짜예요. 수정하려면 잠금 해제</button>
     <div class="daysum" id="daySum2" hidden>
       <div class="dsHead"><b>오늘의 진행률</b><span id="dsSub2"></span></div>
@@ -271,6 +276,7 @@
       <button class="undo" id="undoAll">전체 되돌리기</button>
     </div>
     <ul id="allDone"></ul>
+    </div>
   </section>
 
   <!-- 주간 목표 (준비 중) -->
@@ -628,21 +634,11 @@ const HINTS = {
   move: '시간이 없는 일정의 ☰ 를 잡고 끌어서 순서를 바꾸세요. 손을 놓으면 확정돼요. 시간이 있는 일정은 고정이에요.'
 };
 let viewDate = ymd(new Date()), dayUnlocked = '';     // 일일 목표 탭에서 보고 있는 날짜 / 잠금을 푼 지난 날짜
-function shiftDay(n){
+function shiftDay(n, anim = true){
   const d = at(viewDate); d.setDate(d.getDate() + n);
   viewDate = ymd(d); dayUnlocked = ''; mode = ''; renderAll();
-  const list = $('all'); list.classList.remove('sl', 'sr'); void list.offsetWidth; list.classList.add(n > 0 ? 'sl' : 'sr');   // 밀린 방향으로 살짝 미끄러지는 효과
+  if (anim){ const list = $('all'); list.classList.remove('sl', 'sr'); void list.offsetWidth; list.classList.add(n > 0 ? 'sl' : 'sr'); }   // 화살표로 넘길 때: 밀린 방향으로 살짝 미끄러지는 효과
 }
-let swipe = null;       // 일일 목표: 화면을 왼쪽으로 밀면 다음 날, 오른쪽으로 밀면 전날
-$('vAll').addEventListener('touchstart', e => {
-  if (e.touches.length !== 1 || mode || $('dlg').open){ swipe = null; return; }
-  swipe = {x: e.touches[0].clientX, y: e.touches[0].clientY};
-}, {passive: true});
-$('vAll').addEventListener('touchend', e => {
-  if (!swipe) return;
-  const dx = e.changedTouches[0].clientX - swipe.x, dy = e.changedTouches[0].clientY - swipe.y; swipe = null;
-  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) shiftDay(dx < 0 ? 1 : -1);      // 세로 스크롤과 구분: 가로로 충분히, 거의 수평으로 밀 때만
-}, {passive: true});
 function renderAll(){
   setTimeout(updateFab);
   const now = new Date(), today = ymd(now), isToday = viewDate === today, past = viewDate < today;
@@ -1013,12 +1009,45 @@ $('calDetail').onclick = () => {                         // 선택한 날짜를 
 };
 $('calUnlock').onclick = () => { calUnlocked = calSel; renderCal(); };
 $('calAdd').onclick = () => { openEditor(null); $('eDate').value = calSel; };
-let swipeX = null;       // 좌우로 쓸어서 달 넘기기
-$('calGrid').addEventListener('touchstart', e => { swipeX = e.touches[0].clientX; }, {passive: true});
-$('calGrid').addEventListener('touchend', e => {
-  if (swipeX == null) return; const dx = e.changedTouches[0].clientX - swipeX; swipeX = null;
-  if (Math.abs(dx) > 60) shiftMonth(dx < 0 ? 1 : -1);
-}, {passive: true});
+/* ---------- 손가락을 따라 밀리며 넘어가는 화면 (일일 목표: 날짜 / 월간 목표: 달) ---------- */
+function makePager(pane, blocked, shift){
+  let st = null;
+  const W = () => pane.offsetWidth || innerWidth;
+  const setX = (x, a) => { pane.style.transform = x ? `translateX(${x}px)` : ''; pane.style.opacity = a == null ? '' : a; };
+  const settle = () => { pane.style.transition = ''; pane.style.opacity = ''; pane.style.transform = ''; };
+  pane.addEventListener('touchstart', e => {
+    if (st && st.busy) return;                           // 넘어가는 동안에는 새 동작을 받지 않는다
+    if (e.touches.length !== 1 || blocked()){ st = null; return; }
+    st = {x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now(), dir: null, busy: false};
+    pane.style.transition = 'none';
+  }, {passive: true});
+  pane.addEventListener('touchmove', e => {                // 손가락을 따라 내용이 같이 움직인다
+    if (!st || st.busy) return;
+    const dx = e.touches[0].clientX - st.x, dy = e.touches[0].clientY - st.y;
+    if (!st.dir){ if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; st.dir = Math.abs(dx) > Math.abs(dy) * 1.5 ? 'h' : 'v'; }   // 가로/세로 방향 잠금
+    if (st.dir === 'h') setX(dx, 1 - Math.min(.5, Math.abs(dx) / W() * .8));
+  }, {passive: true});
+  pane.addEventListener('touchend', e => {
+    if (!st || st.busy) return;
+    const s0 = st; st = null;
+    if (s0.dir !== 'h'){ settle(); return; }
+    const dx = e.changedTouches[0].clientX - s0.x, v = Math.abs(dx) / Math.max(1, Date.now() - s0.t);
+    const go = Math.abs(dx) > W() * .25 || (Math.abs(dx) > 40 && v > .5);     // 화면의 1/4 이상 밀었거나, 짧아도 빠르게 튕겼을 때
+    const dir = dx < 0 ? 1 : -1;
+    pane.style.transition = 'transform .18s ease-out, opacity .18s ease-out';
+    if (!go){ setX(0, 1); setTimeout(settle, 200); return; }                   // 모자라면 제자리로 돌아온다
+    s0.busy = true; st = s0; setX(-dir * W(), .2);                             // 밀던 방향으로 나가고
+    setTimeout(() => {
+      shift(dir);                                                              // 날짜(달)를 바꾼 뒤
+      pane.style.transition = 'none'; setX(dir * W(), .2); void pane.offsetWidth;   // 반대편에서
+      pane.style.transition = 'transform .2s ease-out, opacity .2s ease-out'; setX(0, 1);   // 들어온다
+      setTimeout(() => { settle(); st = null; }, 230);
+    }, 180);
+  }, {passive: true});
+  pane.addEventListener('touchcancel', () => { if (st && !st.busy){ st = null; setX(0, 1); setTimeout(settle, 200); } }, {passive: true});
+}
+makePager($('dayPane'), () => mode || $('dlg').open, d => shiftDay(d, false));
+makePager($('calPane'), () => $('dlg').open, d => shiftMonth(d));
 
 /* ---------- 알림 ---------- */
 const notified = new Set();
