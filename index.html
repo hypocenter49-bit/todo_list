@@ -34,12 +34,13 @@
   #dayToday{flex:none;white-space:nowrap}
   #dayToday:disabled{opacity:.35}
   .daynav .arrow{font-size:28px;line-height:1;padding:2px 10px}
-  #dayUnlock{display:block;width:100%;margin-top:10px;padding:12px;text-align:center}
+  .unlockbtn{display:block;width:100%;margin-top:10px;padding:12px;text-align:center}   /* id가 아니라 class: 옆 날짜 미리보기(복사본)에서도 같은 모양이 되게 */
   .stat{flex:none}
   .bar.wrap .tools{flex:1 1 100%;justify-content:flex-end}
   .soon{margin-top:40px}
   main{min-height:100vh;touch-action:pan-y}   /* 빈 공간에서도 밀 수 있게 화면 전체 높이, 세로 스크롤은 그대로 두고 가로로 미는 동작만 직접 처리 */
   #dayBox,#calBox{position:relative}
+  #dayBox,#dayPane{display:flow-root}      /* 첫 칸의 위쪽 바깥 여백이 밖으로 빠져나가지 않게 → 옆 날짜 미리보기와 같은 높이에서 시작 */
   .blink{animation:blink .3s ease-out}         /* 달이 바뀔 때 아래 영역이 잠깐 깜빡이며 바뀐다 */
   @keyframes blink{0%{opacity:0}100%{opacity:1}}
   #vAll,#vCal{overflow-x:clip}
@@ -98,8 +99,7 @@
   .hint{background:var(--accent);color:#000;border-radius:10px;padding:8px 12px;font-size:13px;margin:12px 0 0}
 
   ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-  li{display:flex;align-items:center;gap:12px;background:var(--card);padding:12px 14px;border-radius:12px;animation:in .25s}
-  @keyframes in{from{opacity:0;transform:translateY(-6px)}}
+  li{display:flex;align-items:center;gap:12px;background:var(--card);padding:12px 14px;border-radius:12px}     /* 등장 효과는 없앴다: 화면이 다시 그려질 때(밀어서 넘길 때, 30초 갱신) 박스가 깜빡이며 올라오는 것을 막는다 */
   li.out{opacity:0;transform:translateX(30px);transition:.25s}
   .info{flex:1;min-width:0}
   .title{word-break:break-all}
@@ -125,8 +125,8 @@
   .calnav b{flex:1;text-align:center;font-size:18px}
   .calnav .navbtn{font-size:24px;padding:4px 14px}
   .calwk{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;color:var(--sub);margin:16px 0 4px}
-  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;touch-action:pan-y}
-  .cell{aspect-ratio:1/1;border:0;border-radius:10px;background:none;color:var(--text);font-size:14px;position:relative;padding:0}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;touch-action:pan-y;aspect-ratio:7/6}   /* 높이 고정: 4~6행이어도 아래 화면 위치가 그대로 */
+  .cell{height:100%;border:0;border-radius:10px;background:none;color:var(--text);font-size:14px;position:relative;padding:0}
   .cell.out{visibility:hidden}
   .cell.mute{color:var(--sub)}
   .cell.today{box-shadow:inset 0 0 0 2px var(--accent)}
@@ -139,7 +139,6 @@
   .dayhead span{display:block;font-weight:400;font-size:12px;color:var(--sub);margin-top:3px}   /* 기록은 항상 날짜 아래 줄에 */
   .stat{flex:none;width:28px;text-align:center;font-size:18px;color:var(--sub)}
   .stat.on{color:var(--accent)}
-  #calUnlock{display:block;width:100%;margin-top:10px;padding:12px;text-align:center}
   .more{text-align:center;color:var(--sub);font-size:14px;margin-top:14px}
   .empty{text-align:center;color:var(--sub);padding:36px 0;background:var(--card);border-radius:12px}
   .foot{margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:6px}
@@ -243,7 +242,7 @@
       <button class="detailbtn" id="calDetail">자세히 보기</button>
     </div>
     <ul id="calList"></ul>
-    <button class="textbtn" id="calUnlock" hidden></button>
+    <button class="textbtn unlockbtn" id="calUnlock" hidden></button>
     <button class="addbig" id="calAdd" hidden></button>
     </div>
     </div>
@@ -265,7 +264,7 @@
       </div>
     </div>
     <div id="dayBox"><div id="dayPane">
-    <button class="textbtn" id="dayUnlock" hidden>🔒 지난 날짜예요. 수정하려면 잠금 해제</button>
+    <button class="textbtn unlockbtn" id="dayUnlock" hidden>🔒 지난 날짜예요. 수정하려면 잠금 해제</button>
     <div class="daysum" id="daySum2" hidden>
       <div class="dsHead"><b>오늘의 진행률</b><span id="dsSub2"></span></div>
       <div class="pmsg" id="dsMsg2"></div>
@@ -655,7 +654,7 @@ function renderAll(){
   $('dayTitle').textContent = (dd.getFullYear() !== now.getFullYear() ? dd.getFullYear() + '년 ' : '') + `${dd.getMonth() + 1}월 ${dd.getDate()}일 (${DAYS[dd.getDay()]})`;
   $('dayTitle').classList.toggle('today', isToday);
   $('dayToday').disabled = isToday;                       // 오늘 버튼은 항상 같은 자리, 오늘이면 눌리지 않게
-  document.querySelector('#vAll .tools').hidden = !editable; $('addBig').hidden = !editable;
+  document.querySelector('#vAll .tools').style.visibility = editable ? '' : 'hidden'; $('addBig').hidden = !editable;   // 도구 줄은 자리를 유지한 채 숨긴다: 날짜를 넘길 때 상단 바 높이가 바뀌어 내용이 튀지 않게
   $('dayUnlock').hidden = !(past && !editable);
 
   // 일정 목록: 오늘은 '오늘 해야 하는 일'(밀린 일정 포함), 다른 날은 그날 해당하는 일정
@@ -967,6 +966,7 @@ function renderCal(){
   // 달력 칸: 기록된 날은 그날 진행률 색, 앞으로의 일정이 있는 날은 점
   const grid = $('calGrid'); grid.replaceChildren();
   const first = new Date(calY, calM, 1).getDay(), last = new Date(calY, calM + 1, 0).getDate();
+  grid.style.gridTemplateRows = `repeat(${Math.ceil((first + last) / 7)}, 1fr)`;      // 행 수(4~6)만큼 같은 높이로 나눈다
   for (let i = 0; i < first; i++){ const b = document.createElement('div'); grid.append(b); }
   for (let day = 1; day <= last; day++){
     const D = `${mk}-${pad(day)}`, b = document.createElement('button'), e = dayLog[D];
